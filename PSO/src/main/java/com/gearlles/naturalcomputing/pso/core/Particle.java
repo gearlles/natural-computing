@@ -12,20 +12,16 @@ public class Particle {
 	private double[] position;
 	private double[] bestPosition;
 	private double[] bestNeighborhoodPosition;
-	private double fitness;
 
 	public Particle(double[] velocity, double[] position,
-			double[] bestPosition, double[] bestNeighborhoodPosition,
-			double fitness) {
+			double[] bestPosition, double[] bestNeighborhoodPosition) {
 		this.velocity = velocity;
 		this.position = position;
 		this.bestPosition = bestPosition;
 		this.bestNeighborhoodPosition = bestNeighborhoodPosition;
-		this.fitness = fitness;
 	}
 
 	public Particle() {
-		// TODO Auto-generated constructor stub
 	}
 
 	public double[] getVelocity() {
@@ -44,10 +40,6 @@ public class Particle {
 		return bestNeighborhoodPosition;
 	}
 
-	public double getFitness() {
-		return fitness;
-	}
-	
 	public void setPosition(double[] position) {
 		this.position = position;
 	}
@@ -56,12 +48,12 @@ public class Particle {
 		this.velocity = velocity;
 	}
 
-	public void setFitness(double fitness) {
-		this.fitness = fitness;
-	}
-
 	public void setBestNeighborhoodPosition(double[] bestNeighborhoodPosition) {
 		this.bestNeighborhoodPosition = bestNeighborhoodPosition;
+	}
+
+	public void setBestPosition(double[] bestPosition) {
+		this.bestPosition = bestPosition;
 	}
 
 }

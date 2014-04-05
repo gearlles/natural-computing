@@ -15,6 +15,8 @@ public class PSOSearch {
 	private int maxIterations;
 	private int dimensions;
 	private int numberOfParticles;
+	
+	private double[] bestKnownPosition;
 
 	private Random rand = new Random();
 
@@ -28,10 +30,10 @@ public class PSOSearch {
 	private double R2 = 2;
 
 	public PSOSearch() {
-		this.maxIterations = 5;
+		this.maxIterations = 10;
 		this.dimensions = 10;
-		this.numberOfParticles = 20;
-		
+		this.numberOfParticles = 50;
+
 		this.swarm = new ArrayList<Particle>();
 	}
 
@@ -41,31 +43,28 @@ public class PSOSearch {
 		for (int i = 0; i < this.maxIterations; i++) {
 			logger.debug(String.format("Generation #%d", i));
 
-			double globalBestFitness = Double.MIN_VALUE;
-
 			for (Particle particle : swarm) {
 				particle.setVelocity(getNewVelocity(particle));
 				particle.setPosition(getNewPosition(particle));
 
-				double newFitness = getNewFitness(particle);
+				double newFitness = calculateFitness(particle.getPosition());
 
-				if (newFitness > particle.getFitness()) {
-					particle.setFitness(newFitness);
+				if (newFitness < calculateFitness(particle.getBestPosition())) {
+					particle.setBestPosition(particle.getPosition());
 				}
 
-				if (newFitness > globalBestFitness) {
-					updateNeighborhood(particle, particle.getPosition());
-					globalBestFitness = newFitness;
+				if (newFitness < calculateFitness(bestKnownPosition)) {
+					updateNeighborhood(particle);
+					bestKnownPosition = particle.getPosition();
 				}
 			}
 
 			logger.debug(String.format("Global best fitness: %f",
-					globalBestFitness));
+					calculateFitness(bestKnownPosition)));
 		}
 	}
 
-	private double getNewFitness(Particle particle) {
-		double[] inputs = particle.getPosition();
+	private double calculateFitness(double[] inputs) {
 		double res = 10 * inputs.length;
 		for (int i = 0; i < inputs.length; i++)
 			res += inputs[i] * inputs[i] - 10
@@ -104,11 +103,22 @@ public class PSOSearch {
 		return newVelocity;
 	}
 
-	private void updateNeighborhood(Particle particle,
-			double[] bestNeighborhoodPosition) {
+	private void updateNeighborhood(Particle particle) {
+		double bestFitness = bestKnownPosition == null ? Double.MAX_VALUE : calculateFitness(bestKnownPosition);
+		double[] bestNeighborhoodPosition = bestKnownPosition;
 		for (Particle _particle : swarm) {
-			_particle.setBestNeighborhoodPosition(bestNeighborhoodPosition);
+			double fitness = calculateFitness(_particle.getPosition());
+			if (fitness < bestFitness) {
+				bestFitness = fitness;
+				bestNeighborhoodPosition = _particle.getPosition();
+			}
 		}
+
+			for (Particle _particle : swarm) {
+				_particle.setBestNeighborhoodPosition(bestNeighborhoodPosition);
+			}
+
+			bestKnownPosition = bestNeighborhoodPosition;
 	}
 
 	private void initializeSwarm() {
@@ -117,16 +127,20 @@ public class PSOSearch {
 			double[] velocity = new double[dimensions];
 
 			for (int j = 0; j < dimensions; j++) {
-				position[j] = rand.nextDouble() * RANGE;
+				position[j] = rand.nextDouble() * RANGE; // FIXME: colocar na região negativa tb
 				velocity[j] = rand.nextDouble() * MAX_VELOCITY;
 			}
 
 			Particle particle = new Particle();
 			particle.setPosition(position);
+			particle.setBestPosition(position);
 			particle.setVelocity(velocity);
-
+			
 			swarm.add(particle);
+			
+			updateNeighborhood(particle);
 		}
+		
 	}
 
 }
