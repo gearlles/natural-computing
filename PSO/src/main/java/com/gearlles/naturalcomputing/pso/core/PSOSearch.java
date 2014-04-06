@@ -7,6 +7,8 @@ import java.util.Random;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gearlles.naturalcomputing.pso.gui.PSOVisualizer;
+
 public class PSOSearch {
 
 	private Logger logger = LoggerFactory.getLogger(PSOSearch.class);
@@ -15,34 +17,36 @@ public class PSOSearch {
 	private int maxIterations;
 	private int dimensions;
 	private int numberOfParticles;
-	
+
 	private double[] bestKnownPosition;
 
 	private Random rand = new Random();
 
-	private final double RANGE = 5.2;
-	private final double MAX_VELOCITY = 0.002;
+	private final double RANGE = 5.2f;
+	private final double MAX_VELOCITY = 0.002f;
 
-	private double W = 0.9;
-	private double C1 = 2.05;
-	private double R1 = 2;
-	private double C2 = 1.05;
-	private double R2 = 2;
+	private double W = 0.9f;
+	private double C1 = 2.05f;
+	private double C2 = 1.05f;
 
-	public PSOSearch() {
-		this.maxIterations = 10;
-		this.dimensions = 10;
-		this.numberOfParticles = 50;
+	private PSOVisualizer psoVisualizer;
+
+	private boolean updateVelocity;
+
+	public PSOSearch(PSOVisualizer psoVisualizer) {
+		this.maxIterations = 150;
+		this.dimensions = 2;
+		this.numberOfParticles = 200;
+		this.updateVelocity = true;
 
 		this.swarm = new ArrayList<Particle>();
+		this.psoVisualizer = psoVisualizer;
 	}
 
 	public void run() {
 		initializeSwarm();
 
 		for (int i = 0; i < this.maxIterations; i++) {
-			logger.debug(String.format("Generation #%d", i));
-
 			for (Particle particle : swarm) {
 				particle.setVelocity(getNewVelocity(particle));
 				particle.setPosition(getNewPosition(particle));
@@ -59,8 +63,19 @@ public class PSOSearch {
 				}
 			}
 
-			logger.debug(String.format("Global best fitness: %f",
+			logger.debug(String.format("Iteration #%s: global best fitness: %f", i, 
 					calculateFitness(bestKnownPosition)));
+
+			psoVisualizer.update(i);
+			while (!psoVisualizer.isPaintComplete())
+				;
+
+			try {
+				Thread.sleep(500);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -79,6 +94,9 @@ public class PSOSearch {
 
 		for (int i = 0; i < dimensions; i++) {
 			newPosition[i] = oldPosition[i] + velocity[i];
+			if (newPosition[i] < -RANGE || newPosition[i] > RANGE) {
+				this.updateVelocity = false;
+			}
 		}
 
 		return newPosition;
@@ -93,6 +111,8 @@ public class PSOSearch {
 				.getBestNeighborhoodPosition();
 
 		for (int i = 0; i < dimensions; i++) {
+			double R1 = rand.nextDouble();
+			double R2 = rand.nextDouble();
 			double inertia = W * oldVelocity[i];
 			double selfMemory = C1 * R1 * (bestPosition[i] - position[i]);
 			double globalInfluence = C2 * R2
@@ -104,7 +124,8 @@ public class PSOSearch {
 	}
 
 	private void updateNeighborhood(Particle particle) {
-		double bestFitness = bestKnownPosition == null ? Double.MAX_VALUE : calculateFitness(bestKnownPosition);
+		double bestFitness = bestKnownPosition == null ? Double.MAX_VALUE
+				: calculateFitness(bestKnownPosition);
 		double[] bestNeighborhoodPosition = bestKnownPosition;
 		for (Particle _particle : swarm) {
 			double fitness = calculateFitness(_particle.getPosition());
@@ -114,11 +135,11 @@ public class PSOSearch {
 			}
 		}
 
-			for (Particle _particle : swarm) {
-				_particle.setBestNeighborhoodPosition(bestNeighborhoodPosition);
-			}
+		for (Particle _particle : swarm) {
+			_particle.setBestNeighborhoodPosition(bestNeighborhoodPosition);
+		}
 
-			bestKnownPosition = bestNeighborhoodPosition;
+		bestKnownPosition = bestNeighborhoodPosition;
 	}
 
 	private void initializeSwarm() {
@@ -127,7 +148,7 @@ public class PSOSearch {
 			double[] velocity = new double[dimensions];
 
 			for (int j = 0; j < dimensions; j++) {
-				position[j] = rand.nextDouble() * RANGE; // FIXME: colocar na região negativa tb
+				position[j] = rand.nextDouble() * 2 * RANGE - RANGE;
 				velocity[j] = rand.nextDouble() * MAX_VELOCITY;
 			}
 
@@ -135,12 +156,16 @@ public class PSOSearch {
 			particle.setPosition(position);
 			particle.setBestPosition(position);
 			particle.setVelocity(velocity);
-			
+
 			swarm.add(particle);
-			
+
 			updateNeighborhood(particle);
 		}
-		
+
+	}
+
+	public List<Particle> getSwarm() {
+		return swarm;
 	}
 
 }

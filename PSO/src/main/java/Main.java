@@ -1,12 +1,13 @@
-import com.gearlles.naturalcomputing.pso.core.PSOSearch;
+import com.gearlles.naturalcomputing.pso.gui.PSOVisualizer;
 
 
 public class Main {
 
 	public static void main(String[] args) {
-		PSOSearch search = new PSOSearch();
-		search.run();
-
+		PSOVisualizer v = new PSOVisualizer();
+		v.displayGUI();
+		v.start();
+		
 	}
 
 }
