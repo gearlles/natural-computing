@@ -1,24 +1,29 @@
 package com.gearlles.naturalcomputing.pso.gui;
 
 import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
+import java.awt.geom.Point2D;
+import java.awt.geom.Point2D.Double;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JFrame;
+import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 import com.gearlles.naturalcomputing.pso.core.PSOSearch;
 import com.gearlles.naturalcomputing.pso.core.Particle;
-import javax.swing.JButton;
-import java.awt.BorderLayout;
-import javax.swing.JLabel;
-import java.awt.FlowLayout;
-import javax.swing.JPanel;
-import java.awt.GridLayout;
 
 public class PSOVisualizer {
 
 	private PSOFrame frame;
 	private PSOSearch search;
 	private boolean completed;
+	
+	public PSOVisualizer() {
+		search = new PSOSearch(this);
+	}
 
 	/**
 	 * Launch the application.
@@ -51,12 +56,10 @@ public class PSOVisualizer {
 		frame.getContentPane().setLayout(new GridLayout(0, 1, 0, 0));
 		frame.setVisible(true);
 		this.completed = true;
-		search = new PSOSearch(this);
-		
 	}
 	
-	public void start() {
-		search.run();
+	public void start(boolean headless, int velocity) {
+		search.run(headless, velocity);
 	}
 
 	public void update(int iteration) {
@@ -64,10 +67,17 @@ public class PSOVisualizer {
 		frame.cleanDots();
 		for (int i = 0; i < search.getSwarm().size(); i++) {
 			Particle particle = search.getSwarm().get(i);
-			frame.addDot(iteration, particle.getPosition()[0] + 5.2, particle.getPosition()[1] + 5.2);
-			
+			frame.addDot(iteration, particle.getPosition()[0] + 5.2, particle.getPosition()[1] + 5.2, getNeighborsPositions(particle));
 		}
 		this.completed = true;
+	}
+	
+	public List<Double> getNeighborsPositions(Particle particle) {
+		List<Point2D.Double> dots = new ArrayList<Point2D.Double>();
+		for (Particle neighbor : particle.getNeighbors()) {
+			dots.add(new Point2D.Double(neighbor.getPosition()[0] + 5.2, neighbor.getPosition()[1] + 5.2));
+		}
+		return dots;
 	}
 
 	public boolean isPaintComplete() {
