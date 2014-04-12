@@ -4,7 +4,7 @@ import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Image;
+import java.awt.RenderingHints;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.util.List;
@@ -20,6 +20,7 @@ public class WindowController {
 	Logger logger = LoggerFactory.getLogger(WindowController.class);
 	
 	private MainWindow mainWindow;
+	private BufferedImage frame;
 	private FSSSearch search;
 	private boolean isRunning = true;
 	
@@ -85,19 +86,22 @@ public class WindowController {
 	private boolean updateUi(List<Fish> school) {
 		Canvas canvas = mainWindow.getCanvas();
 		BufferStrategy bufferStrategy = canvas.getBufferStrategy();
-	    
+		frame = new BufferedImage(canvas.getWidth(), canvas.getHeight(), BufferedImage.TYPE_INT_RGB);
+		Graphics2D graphics = (Graphics2D) frame.getGraphics();
 	    Graphics2D g = (Graphics2D)bufferStrategy.getDrawGraphics();
-	    
-//	    for (int i = 0; i < school.size(); i++) {
-//	    	BufferedImage image = new BufferedImage(PARTICLE_SIZE, PARTICLE_SIZE, BufferedImage.TYPE_INT_ARGB);
-//	 	    Graphics imageGraphics = image.getGraphics();
-//	 	    imageGraphics.setColor(Color.YELLOW);
-//	 	    imageGraphics.fillOval(0, 0, PARTICLE_SIZE, PARTICLE_SIZE);
-//	 	    
-//	 	    // TODO get fish position
-//	 	    g.drawImage(image, (int)school.get(i).getPosition()[0], (int)school.get(i).getPosition()[1], null);
-//		}
-	    g.drawString(String.format("FPS: %s", this.currentFPS), 10, 10);
+	    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+				RenderingHints.VALUE_ANTIALIAS_ON);
+	    for (int i = 0; i < school.size(); i++) {
+	    	BufferedImage image = new BufferedImage(PARTICLE_SIZE, PARTICLE_SIZE, BufferedImage.TYPE_INT_RGB);
+	 	    Graphics imageGraphics = image.getGraphics();
+	 	    imageGraphics.setColor(Color.YELLOW);
+	 	    imageGraphics.fillOval(0, 0, PARTICLE_SIZE, PARTICLE_SIZE);
+	 	    
+	 	    // TODO get fish position
+	 	   graphics.drawImage(image, (int)school.get(i).getPosition()[0], (int)school.get(i).getPosition()[1], null);
+		}
+	    graphics.drawString(String.format("FPS: %s", this.currentFPS), 10, 10);
+	    g.drawImage(frame, 0, 0, null);
 	    g.dispose();
 	    
 	    bufferStrategy.show();
@@ -105,7 +109,7 @@ public class WindowController {
 	}
 
 	public void startSearch(boolean headless) {
-		render();
-		
+//		render();
+		search.iterate();
 	}
 }
