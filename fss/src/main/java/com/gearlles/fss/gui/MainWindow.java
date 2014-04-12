@@ -14,6 +14,7 @@ import javax.swing.border.TitledBorder;
 
 import net.miginfocom.swing.MigLayout;
 import java.awt.Color;
+import java.awt.SystemColor;
 
 public class MainWindow {
 
@@ -68,13 +69,14 @@ public class MainWindow {
 		frame = new JFrame();
 		frame.setBounds(100, 100, 450, 300);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.getContentPane().setLayout(new MigLayout("", "[grow 70][grow 30]", "[grow]"));
+		frame.getContentPane().setLayout(new MigLayout("", "[fill, grow, 70%][fill, grow, 30%]", "[grow]"));
 		
 		JPanel canvasPanel = new JPanel();
 		frame.getContentPane().add(canvasPanel, "cell 0 0,grow");
 		canvasPanel.setLayout(new BorderLayout(0, 0));
 		
 		canvas = new Canvas();
+		canvas.setBackground(SystemColor.activeCaption);
 		canvasPanel.add(canvas, BorderLayout.CENTER);
 		
 		JPanel settingsPanel = new JPanel();
@@ -97,6 +99,7 @@ public class MainWindow {
 		populationSizeTextField.setText("20");
 		settingsPanel.add(populationSizeTextField, "cell 1 1,growx");
 		populationSizeTextField.setColumns(10);
+		
 	}
 
 	public JTextField getIterationsTextField() {

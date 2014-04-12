@@ -1,5 +1,6 @@
 package com.gearlles.fss.gui;
 
+import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -22,28 +23,47 @@ public class WindowController {
 	private FSSSearch search;
 	private boolean isRunning = true;
 	
+	/**
+	 * Particle's size, in pixels.
+	 */
+	private final int PARTICLE_SIZE = 7;
+	
+	/**
+	 * How many frames since the last update.
+	 */
 	public int frames;
-	public int fps;
-	private int maxFps = 300;
+	
+	/**
+	 * The FPS.
+	 */
+	public int currentFPS;
+	
+	/**
+	 * FPS limit.
+	 */
+	private final int FPS_LIMIT = 100;
+	
+	/**
+	 * Used to calculate FPS.
+	 */
 	public long lastTime;
 	
 	public WindowController() {
 		mainWindow = new MainWindow();
+		mainWindow.getCanvas().createBufferStrategy(2);
 		search = new FSSSearch();
 	}
 	
-	public void render() {
-		long fpsWait = (long) (1.0 / maxFps * 1000);
+	private void render() {
 		
 		while(isRunning) {
-			long renderStart = System.nanoTime();
+			long renderStart = System.currentTimeMillis();
 //			updateLogic();
-			updateUi(search.getSchool());
-			
+			while ( updateUi(search.getSchool()) );
     		// FPS limiting here
-    		long renderTime = (System.nanoTime() - renderStart) / 1000000;
+    		long renderTime = (System.currentTimeMillis() - renderStart);
     		try {
-    			Thread.sleep(Math.max(0, fpsWait - renderTime));
+    			Thread.sleep(Math.max(0, (1000 / FPS_LIMIT) - renderTime));
     		} catch (InterruptedException e) {
     			Thread.interrupted();
     			break;
@@ -55,30 +75,37 @@ public class WindowController {
 
 	private void calculateFPs() {
 		if(System.currentTimeMillis() - lastTime >= 1000){
-		    fps = frames;
+		    currentFPS = frames;
 		    frames = 0;
 		    lastTime = System.currentTimeMillis();
 		}
 		frames++;
 	}
 
-	private void updateUi(List<Fish> school) {
-		BufferStrategy bs = mainWindow.getCanvas().getBufferStrategy();
-	    if(bs == null){
-	    	mainWindow.getCanvas().createBufferStrategy(2);
-	        return;
-	    }
+	private boolean updateUi(List<Fish> school) {
+		Canvas canvas = mainWindow.getCanvas();
+		BufferStrategy bufferStrategy = canvas.getBufferStrategy();
 	    
-	    logger.debug("> " + fps);
+	    Graphics2D g = (Graphics2D)bufferStrategy.getDrawGraphics();
 	    
-	    Graphics2D g = (Graphics2D)bs.getDrawGraphics();
-	    BufferedImage toDrawImage = new BufferedImage(100, 100, BufferedImage.TYPE_INT_RGB);
-	    Graphics toDrawG = toDrawImage.getGraphics();
-	    toDrawG.setColor(Color.BLUE);
-//	    toDrawG.fillRect(0, 0, 100,100);
-	    toDrawG.drawString(String.format("FPS: %d", this.fps), 15, 15);
-	    g.drawImage(toDrawImage, 0, 0, null);
+//	    for (int i = 0; i < school.size(); i++) {
+//	    	BufferedImage image = new BufferedImage(PARTICLE_SIZE, PARTICLE_SIZE, BufferedImage.TYPE_INT_ARGB);
+//	 	    Graphics imageGraphics = image.getGraphics();
+//	 	    imageGraphics.setColor(Color.YELLOW);
+//	 	    imageGraphics.fillOval(0, 0, PARTICLE_SIZE, PARTICLE_SIZE);
+//	 	    
+//	 	    // TODO get fish position
+//	 	    g.drawImage(image, (int)school.get(i).getPosition()[0], (int)school.get(i).getPosition()[1], null);
+//		}
+	    g.drawString(String.format("FPS: %s", this.currentFPS), 10, 10);
 	    g.dispose();
-	    bs.show();
+	    
+	    bufferStrategy.show();
+	    return bufferStrategy.contentsLost();
+	}
+
+	public void startSearch(boolean headless) {
+		render();
+		
 	}
 }

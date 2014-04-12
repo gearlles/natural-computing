@@ -11,6 +11,6 @@ public class App
     public static void main( String[] args )
     {
         WindowController w = new WindowController();
-        w.render();
+        w.startSearch(false);
     }
 }
