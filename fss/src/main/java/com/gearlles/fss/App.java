@@ -12,5 +12,6 @@ public class App
     {
         WindowController w = new WindowController();
         w.startSearch(false);
+        
     }
 }

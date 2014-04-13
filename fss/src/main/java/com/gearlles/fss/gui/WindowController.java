@@ -59,7 +59,7 @@ public class WindowController {
 		
 		while(isRunning) {
 			long renderStart = System.currentTimeMillis();
-//			updateLogic();
+			updateLogic();
 			while ( updateUi(search.getSchool()) );
     		// FPS limiting here
     		long renderTime = (System.currentTimeMillis() - renderStart);
@@ -98,8 +98,15 @@ public class WindowController {
 	 	    imageGraphics.fillOval(0, 0, PARTICLE_SIZE, PARTICLE_SIZE);
 	 	    
 	 	    // TODO get fish position
-	 	   graphics.drawImage(image, (int)school.get(i).getPosition()[0], (int)school.get(i).getPosition()[1], null);
+	 	    double fishX = school.get(i).getPosition()[0] + search.getRANGE();
+	 	   double fishY = school.get(i).getPosition()[1] + search.getRANGE();
+	 	   
+			int x = (int) ((fishX * canvas.getWidth()) / (2 * search.getRANGE()));
+			int y = (int) ((fishY * canvas.getHeight()) / (2 * search.getRANGE()));
+	 	    		logger.debug("" + x + ", " + y);
+	 	   	graphics.drawImage(image, x, y, null);
 		}
+	    
 	    graphics.drawString(String.format("FPS: %s", this.currentFPS), 10, 10);
 	    g.drawImage(frame, 0, 0, null);
 	    g.dispose();
@@ -107,9 +114,12 @@ public class WindowController {
 	    bufferStrategy.show();
 	    return bufferStrategy.contentsLost();
 	}
+	
+	private void updateLogic() {
+		search.iterateOnce();
+	}
 
 	public void startSearch(boolean headless) {
-//		render();
-		search.iterate();
+		render();
 	}
 }
