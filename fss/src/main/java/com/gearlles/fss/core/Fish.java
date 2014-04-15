@@ -41,4 +41,9 @@ public class Fish {
 	public void setDeltaPosition(double[] deltaPosition) {
 		this.deltaPosition = deltaPosition;
 	}
+	
+	@Override
+	public String toString() {
+		return String.format("Position: (%f, %f). Weight = %f", position[0], position[1], weight);
+	}
 }

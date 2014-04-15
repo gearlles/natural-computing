@@ -23,6 +23,7 @@ public class WindowController {
 	private BufferedImage frame;
 	private FSSSearch search;
 	private boolean isRunning = true;
+	private int it =0;
 	
 	/**
 	 * Particle's size, in pixels.
@@ -42,7 +43,7 @@ public class WindowController {
 	/**
 	 * FPS limit.
 	 */
-	private final int FPS_LIMIT = 100;
+	private final int FPS_LIMIT = 20;
 	
 	/**
 	 * Used to calculate FPS.
@@ -103,7 +104,6 @@ public class WindowController {
 	 	   
 			int x = (int) ((fishX * canvas.getWidth()) / (2 * search.getRANGE()));
 			int y = (int) ((fishY * canvas.getHeight()) / (2 * search.getRANGE()));
-	 	    		logger.debug("" + x + ", " + y);
 	 	   	graphics.drawImage(image, x, y, null);
 		}
 	    
@@ -116,7 +116,7 @@ public class WindowController {
 	}
 	
 	private void updateLogic() {
-		search.iterateOnce();
+			search.iterateOnce(it++);
 	}
 
 	public void startSearch(boolean headless) {

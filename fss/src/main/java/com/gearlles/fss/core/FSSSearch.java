@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import org.omg.CORBA.INITIALIZE;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,23 +18,36 @@ public class FSSSearch {
 	
 	private Random rand = new Random();
 
-	private double STEP_IND;
 	private double WEIGHT_SCALE;
+	
+	private double STEP_IND;
+	private double FINAL_STEP_IND;
+	private double INITIAL_STEP_IND; 
+	
 	private double STEP_VOL;
+	private double FINAL_STEP_VOL;
+	private double INITIAL_STEP_VOL;
 	
 	private double lastOverallWeight;
 	private double bestFitness;
+	private double maxIterations = 1000;
 	
 	public FSSSearch() {
 		this.school = new ArrayList<Fish>();
-		this.dimensions = 2;
+		this.dimensions = 10;
 		this.schoolSize = 20;
 		this.lastOverallWeight = 0;
 		this.bestFitness = Double.MAX_VALUE;
 		
-		this.STEP_IND = 2;
-		this.STEP_VOL = 2 * this.STEP_IND;
-		this.WEIGHT_SCALE = 5;
+		this.INITIAL_STEP_IND = 1;
+		this.STEP_IND = INITIAL_STEP_IND;
+		this.FINAL_STEP_IND = .1;
+		
+		this.INITIAL_STEP_VOL = .05;
+		this.STEP_VOL = INITIAL_STEP_VOL;
+		this.FINAL_STEP_VOL = .005;
+		
+		this.WEIGHT_SCALE = 10;
 		
 		initialize();
 	}
@@ -50,13 +62,13 @@ public class FSSSearch {
 			
 			Fish fish = new Fish();
 			fish.setPosition(position);
-			fish.setWeight(0d);
+			fish.setWeight(2500);
 			
 			school.add(fish);
 		}
 	}
 
-	public void iterateOnce() {
+	public void iterateOnce(int it) {
 		
 		double iterationBestFitness = Double.MAX_VALUE;
 		
@@ -68,11 +80,21 @@ public class FSSSearch {
 			double oldFitness = calculateFitness(fish.getPosition());
 			double newFitness = calculateFitness(tempPosition);
 			
-			if (newFitness < oldFitness) {
+			boolean insideAquarium = true;
+			for (int j = 0; j < tempPosition.length; j++) {
+				double d = tempPosition[j];
+				if (d < -RANGE || d > RANGE) {
+					insideAquarium = false;
+				}
+				
+			}
+			
+			if ((newFitness < oldFitness) && insideAquarium) {
 				double[] deltaPosition = new double[dimensions];
 				for (int j = 0; j < dimensions; j++) {
 					deltaPosition[j] = tempPosition[j] - fish.getPosition()[j];
 				}
+//				logger.debug(String.format("Fish %d: %s", i, fish.toString()));
 				fish.setDeltaPosition(deltaPosition);
 				fish.setDeltaFitness(newFitness - oldFitness);
 				fish.setPosition(tempPosition);
@@ -82,11 +104,17 @@ public class FSSSearch {
 				}
 				
 			} else {
+//				logger.debug(String.format("Fish %d: inside = %b, better fitness: %b", i, insideAquarium, newFitness < oldFitness));
 				fish.setDeltaPosition(new double[dimensions]);
 				fish.setDeltaFitness(0);
 			}
-			
-			// 2. applying feeding operator
+		}
+		
+		STEP_IND -= (INITIAL_STEP_IND - FINAL_STEP_IND) / maxIterations;
+		
+		// 2. applying feeding operator
+		for (int i = 0; i < school.size(); i++) {
+			Fish fish = school.get(i);
 			double newWeight = feedingOperator(fish);
 			fish.setWeight(newWeight);
 		}
@@ -95,10 +123,12 @@ public class FSSSearch {
 		{
 			bestFitness = iterationBestFitness;
 		}
-		logger.debug(String.format("Best fitness: %f", bestFitness));
+		
+		logger.debug(String.format("%f",bestFitness));
 		
 		double overallWeight = calculateOverallWeight();
 		boolean overallWeightIncreased = overallWeight > lastOverallWeight;
+		lastOverallWeight = overallWeight;
 		
 		// 3. applying collective-instinctive movement
 		collectiveInstinctiveMovement();
@@ -113,17 +143,11 @@ public class FSSSearch {
 		double[] randArray = new double[dimensions];
 		
 		for (int i = 0; i < randArray.length; i++) {
-			randArray[i] = rand.nextDouble(); 
+			randArray[i] = rand.nextDouble() * 2 - 1; 
 		}
 		
 		for (int i = 0; i < dimensions; i++) {
 			newPosition[i] = oldPosition[i] + randArray[i] * STEP_IND;
-			
-			boolean collision = newPosition[i] < -RANGE || newPosition[i] > RANGE;
-			if (collision)
-			{
-				newPosition[i] = newPosition[i] > 0 ? RANGE : - RANGE;
-			}
 		}
 		
 		return newPosition;
@@ -142,25 +166,25 @@ public class FSSSearch {
 				bestDeltaFitness = deltaFitness;
 			}
 		}
-		
-		newWeight = oldWeight + fish.getDeltaFitness() / bestDeltaFitness;
+		if (bestDeltaFitness != 0)  {
+			newWeight = oldWeight + fish.getDeltaFitness() / bestDeltaFitness;
+		} else {
+			newWeight = oldWeight;
+		}
 		
 		// limit the weight according to Carmelo, 2008.
-		if (newWeight < 1) {
-			newWeight = 1;
-		} else if (newWeight > WEIGHT_SCALE) {
+		if (newWeight > WEIGHT_SCALE) {
 			newWeight = WEIGHT_SCALE;
 		}
 		
 		return newWeight;
 	}
 	
-	// TODO review
 	private void collectiveInstinctiveMovement() {
 		double[] m = new double[dimensions];
 		double totalFitness = 0;
 		
-		// calculating m, the weighted avarage of individual movements 
+		// calculating m, the weighted average of individual movements 
 		for (int i = 0; i < school.size(); i++) {
 			Fish _fish = school.get(i);
 			
@@ -169,6 +193,11 @@ public class FSSSearch {
 			}
 			
 			totalFitness += _fish.getDeltaFitness();
+		}
+		
+		// avoid division by 0
+		if (totalFitness == 0) {
+			return;
 		}
 		
 		for (int i = 0; i < dimensions; i++) {
@@ -233,6 +262,8 @@ public class FSSSearch {
 			
 			_fish.setPosition(schoolVolitivePosition);
 		}
+		
+		STEP_VOL -= (INITIAL_STEP_VOL - FINAL_STEP_VOL) / maxIterations;
 	}
 	
 	private double calculateOverallWeight() {
@@ -240,14 +271,21 @@ public class FSSSearch {
 		for (int i = 0; i < school.size(); i++) {
 			overallWeight += school.get(i).getWeight();
 		}
-		return overallWeight / school.size();
+		return overallWeight;
 	}
 	
-	private double calculateFitness(double[] inputs) {
+	private double calculateFitnessa(double[] inputs) {
 		double res = 10 * inputs.length;
 		for (int i = 0; i < inputs.length; i++)
 			res += inputs[i] * inputs[i] - 10
 					* Math.cos(2 * Math.PI * inputs[i]);
+		return res;
+	}
+	
+	private double calculateFitness(double[] inputs) {
+		double res = 0;
+		for (int i = 0; i < inputs.length; i++)
+			res += Math.pow(inputs[i], 2);
 		return res;
 	}
 
@@ -258,7 +296,7 @@ public class FSSSearch {
 	public static void main(String[] args) {
 		FSSSearch s = new FSSSearch();
 		for (int i = 0; i < 1000; i++) {
-			s.iterateOnce();
+			s.iterateOnce(i);
 		}
 	}
 
