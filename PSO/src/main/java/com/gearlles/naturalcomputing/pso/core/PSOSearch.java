@@ -26,7 +26,7 @@ public class PSOSearch {
 	private final double RANGE = 5.2f;
 	private final double MAX_VELOCITY = 0.001f;
 
-	private double W = 0f;
+	private double W = 0.5f;
 	private double C1 = 2.05f;
 	private double C2 = 2.05f;
 
@@ -162,23 +162,9 @@ public class PSOSearch {
 
 	private void updateNeighborhood(Particle particle) {
 		
-		double bestFitness = Double.MAX_VALUE;
-		double[] bestNeighborhoodPosition = null;
+		double[] bestNeighborhoodPosition = getGroupBestKnownPosition(particle);
 		
-		for (int i = 0; i < particle.getNeighbors().size(); i++) {
-			Particle _particle = particle.getNeighbors().get(i);
-			double fitness = calculateFitness(_particle.getPosition());
-			if (fitness < bestFitness) {
-				bestFitness = fitness;
-				bestNeighborhoodPosition = _particle.getPosition();
-			}
-			
-		}
-		
-		for (int i = 0; i < particle.getNeighbors().size(); i++) {
-			Particle _particle = particle.getNeighbors().get(i);
-			_particle.setBestNeighborhoodPosition(bestNeighborhoodPosition);
-		}
+		particle.setBestNeighborhoodPosition(bestNeighborhoodPosition);
 		
 		if (bestKnownPosition == null) {
 			bestKnownPosition = bestNeighborhoodPosition;
