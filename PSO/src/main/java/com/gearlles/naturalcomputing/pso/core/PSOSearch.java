@@ -26,7 +26,7 @@ public class PSOSearch {
 	private final double RANGE = 5.2f;
 	private final double MAX_VELOCITY = 0.001f;
 
-	private double W = 0.5f;
+	private double W = 0f;
 	private double C1 = 2.05f;
 	private double C2 = 2.05f;
 
@@ -34,19 +34,19 @@ public class PSOSearch {
 	private boolean collision;
 
 	public PSOSearch(PSOVisualizer psoVisualizer) {
-		this.maxIterations = 1000;
+		this.maxIterations = 500;
 		this.dimensions = 10;
 		this.numberOfParticles = 20;
 		this.collision = false;
-		this.swarm = new ArrayList<Particle>();
+		
 		this.psoVisualizer = psoVisualizer;
 		this.bestFitnessMed = new double[maxIterations];
 	}
 
 	public void run(boolean headless, int velocity) {
-		initializeSwarm();
 
 		for (int k = 0; k <30; k++) {
+			initializeSwarm();
 //			W = 0.4 + (0.9 - 0.4) * rand.nextDouble();
 			for (int i = 0; i < this.maxIterations; i++) {
 				for (Particle particle : swarm) {
@@ -180,7 +180,9 @@ public class PSOSearch {
 			_particle.setBestNeighborhoodPosition(bestNeighborhoodPosition);
 		}
 		
-		bestKnownPosition = bestNeighborhoodPosition;
+		if (bestKnownPosition == null) {
+			bestKnownPosition = bestNeighborhoodPosition;
+		}
 		
 //		double bestFitness = bestKnownPosition == null ? Double.MAX_VALUE
 //				: calculateFitness(bestKnownPosition);
@@ -201,6 +203,9 @@ public class PSOSearch {
 	}
 
 	private void initializeSwarm() {
+		this.swarm = new ArrayList<Particle>();
+		bestKnownPosition = null;
+		
 		for (int i = 0; i < numberOfParticles; i++) {
 			double[] position = new double[dimensions];
 			double[] velocity = new double[dimensions];
