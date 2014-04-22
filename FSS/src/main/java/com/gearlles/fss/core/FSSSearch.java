@@ -1,9 +1,17 @@
 package com.gearlles.fss.core;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartUtilities;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,8 +42,8 @@ public class FSSSearch {
 	
 	public FSSSearch() {
 		this.school = new ArrayList<Fish>();
-		this.dimensions = 10;
-		this.schoolSize = 20;
+		this.dimensions = 30;
+		this.schoolSize = 30;
 		this.lastOverallWeight = 0;
 		this.bestFitness = Double.MAX_VALUE;
 		
@@ -47,7 +55,7 @@ public class FSSSearch {
 		this.STEP_VOL = INITIAL_STEP_VOL;
 		this.FINAL_STEP_VOL = .005;
 		
-		this.WEIGHT_SCALE = 10;
+		this.WEIGHT_SCALE = 1000;
 		
 		initialize();
 	}
@@ -68,7 +76,7 @@ public class FSSSearch {
 		}
 	}
 
-	public void iterateOnce(int it) {
+	public double iterateOnce(int it) {
 		
 		double iterationBestFitness = Double.MAX_VALUE;
 		
@@ -135,6 +143,8 @@ public class FSSSearch {
 		
 		// 4. applying collective-volitive movement
 		collectiveVolitiveMovement(overallWeightIncreased);
+		
+		return bestFitness;
 	}
 	
 	private double[] individualmovement(Fish fish) {
@@ -274,7 +284,7 @@ public class FSSSearch {
 		return overallWeight;
 	}
 	
-	private double calculateFitnessa(double[] inputs) {
+	private double calculateFitness(double[] inputs) {
 		double res = 10 * inputs.length;
 		for (int i = 0; i < inputs.length; i++)
 			res += inputs[i] * inputs[i] - 10
@@ -282,7 +292,7 @@ public class FSSSearch {
 		return res;
 	}
 	
-	private double calculateFitness(double[] inputs) {
+	private double calculateFitnessa(double[] inputs) {
 		double res = 0;
 		for (int i = 0; i < inputs.length; i++)
 			res += Math.pow(inputs[i], 2);
@@ -294,9 +304,46 @@ public class FSSSearch {
 	}
 	
 	public static void main(String[] args) {
-		FSSSearch s = new FSSSearch();
-		for (int i = 0; i < 1000; i++) {
-			s.iterateOnce(i);
+		int iterations = 1000;
+		
+		double[] best = new double[iterations];
+		
+		for (int i = 0; i < 30; i++) {
+			FSSSearch s = new FSSSearch();
+			for (int j = 0; j < best.length; j++) {
+				best[j] += s.iterateOnce(j);
+			}
+		}
+		
+		for (int i = 0; i < best.length; i++) {
+			best[i] /= 30;
+		}
+		
+		XYSeries series = new XYSeries("Fitness");
+		for (int i = 0; i < iterations; i++) {
+			series.add(i, best[i]);
+		}
+		
+		
+		
+		// Add the series to your data set
+		XYSeriesCollection dataset = new XYSeriesCollection();
+		dataset.addSeries(series);
+		// Generate the graph
+		JFreeChart chart = ChartFactory.createXYLineChart("Fish School Search - Rastrigin function (#1)", // Title
+				"Iteration", // x-axis Label
+				"Best Fitness", // y-axis Label
+				dataset, // Dataset
+				PlotOrientation.VERTICAL, // Plot Orientation
+				true, // Show Legend
+				true, // Use tooltips
+				false // Configure chart to generate URLs?
+				);
+		try {
+			ChartUtilities.saveChartAsJPEG(new File("C:\\Users\\Gearlles\\Desktop\\chart_fss.jpg"), chart, 500, 300);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 
