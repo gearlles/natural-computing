@@ -1,0 +1,18 @@
+Distance equations
+
+EUC_2D:
+
+xd = x[i] - x[j]
+yd = y[i] - y[j]
+dij = round ( sqrt ( xd * xd + yd * yd) )
+
+
+ATT (Pseudo-Euclidian distance function):
+
+xd = x[i] - x[j]
+yd = y[i] - y[j]
+rij = sqrt ((xd * xd + yd * yd) / 10)
+tij = round ( rij )
+
+if (tij < rij ) dij = tij + 1;
+else dij = tij
