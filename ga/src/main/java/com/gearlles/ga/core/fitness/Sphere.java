@@ -3,8 +3,8 @@ package com.gearlles.ga.core.fitness;
 public class Sphere extends FitnessFunction
 {
     // FIXME adjust the limit
-    private static final double LOWER_LIMIT = -5.12;
-    private static final double UPPER_LIMIT = 5.12d;
+    private static final double LOWER_LIMIT = -10d;
+    private static final double UPPER_LIMIT = 10d;
     
     public Sphere()
     {

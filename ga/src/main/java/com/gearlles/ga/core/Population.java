@@ -1,15 +1,18 @@
 package com.gearlles.ga.core;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
+
+import javax.management.RuntimeErrorException;
 
 import com.gearlles.ga.core.selection.SelectionInterface;
 
 public class Population
 {
-    private double       crossoverRatio;
-    private double       elitismRatio;
-    private double       mutationRatio;
+    public static double       crossoverRatio;
+    public static double       elitismRatio;
+    public static double       mutationRatio;
     
     private int chromosomeSize;
     private int populationSize;
@@ -19,14 +22,8 @@ public class Population
     
     public static SelectionInterface selection;
 
-    public Population(int chromosomeSize, int populationSize, double crossoverRatio,
-	    double elitismRatio, double mutationRatio)
+    public Population(int chromosomeSize, int populationSize)
     {
-
-	this.crossoverRatio = crossoverRatio;
-	this.elitismRatio = elitismRatio;
-	this.mutationRatio = mutationRatio;
-	
 	this.chromosomeSize = chromosomeSize;
 	this.populationSize = populationSize;
 
@@ -36,6 +33,15 @@ public class Population
 	{
 	    this.population[i] = new Chromosome(this.chromosomeSize);
 	}
+
+	Arrays.sort(this.population);
+    }
+    
+    public Population(int chromosomeSize, int populationSize, Chromosome[] population)
+    {
+	this.chromosomeSize = chromosomeSize;
+	this.populationSize = populationSize;
+	this.population = population;
 
 	Arrays.sort(this.population);
     }
@@ -50,45 +56,24 @@ public class Population
 
 	for (int i = idx; i < nextPopulation.length; i++)
 	{
-	    // Check to see if we should perform a crossover.
 	    if (rand.nextDouble() <= crossoverRatio)
 	    {
 		Chromosome[] parents = Population.selection.select(population);
 		Chromosome[] children = Chromosome.crossover.mate(parents[0], parents[1]);
 
-		// Check to see if the first child should be mutated.
-		if (rand.nextDouble() <= mutationRatio)
-		{
-		    nextPopulation[i] = Chromosome.mutation.mutate(children[0]);
-		}
-		else
-		{
-		    nextPopulation[i] = children[0];
-		}
+		nextPopulation[i] = Chromosome.mutation.mutate(children[0]);
 
 		// Repeat for the second child, if there is enough space in the
 		// population.
 		if (i + 1 < nextPopulation.length)
 		{
-		    if (rand.nextDouble() <= mutationRatio)
-		    {
-			nextPopulation[++i] = Chromosome.mutation.mutate(children[1]);
-		    }
-		    else
-		    {
-			nextPopulation[++i] = children[1];
-		    }
+		    nextPopulation[++i] = Chromosome.mutation
+			    .mutate(children[1]);
 		}
-	    }
+	    } 
 	    else
 	    {
-		// No crossover, so copy
-		// Determine if mutation should occur.
-		if (rand.nextDouble() <= mutationRatio) {
-		    nextPopulation[i] = Chromosome.mutation.mutate(population[i]);
-		} else {
-		    nextPopulation[i] = population[i];
-		}
+		nextPopulation[i] = Chromosome.mutation.mutate(population[i]);
 	    }
 	}
 
